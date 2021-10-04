@@ -1,0 +1,233 @@
+{% for option in options %}
+    <div class="card" xmlns="http://www.w3.org/1999/html">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    {% if option.imageFile %}
+                        <img class="img-thumbnail" src={{ option.imageFile.url }}>
+                    {% else %}
+                        <img class="img-thumbnail" src="https://d2mekbzx20fc11.cloudfront.net/uploads/Morroccan_Lamb_UC_500x333-rei2.png">
+                    {% endif %}
+                </div>
+                <div class="col-md-8">
+
+                    <div class="form-group">
+                        <div class="float-right">
+                                    <form method="post" id="delete_option_form_{{ option.id }}" action="{% url 'delete_option_in_survey' option.id %}">{% csrf_token %}
+                                            {% csrf_token %}
+                                            <input class="btn-sm btn-danger mr-2" type="submit" onclick="function f() {
+                                                var option_id={{ option.id }};
+                                                var form = document.getElementById("delete_option_form_"+option_id);
+                                                form.submit();
+                                            }" value="Delete">
+                                    </form>
+                        </div>
+                        <h5>Name of the dish</h5>
+                        <div class="text-format">
+                            <p>{{ option.name }}</p>
+                        </div>
+
+                    </div>
+                    <br>
+                    <div class="form-group">
+                        <h5>Description</h5>
+                        <div class="text-format">
+                            {{option.description |safe}}
+                            <input type="hidden" type="text" name="choiceList[]" value={{ choice.id }}/>
+                        </div>
+                    </div>
+                    <div class="row ml-2">
+                        {%if option.vegetarian%}
+                            <h3 class="badge badge-success ml-2" style="font-size:1em">
+                                Vegetarian
+                            </h3>
+
+                        {%endif%}
+                        {%if option.vegan%}
+                            <h3 class="badge badge-success ml-2" style="font-size:1em">
+                                Vegan
+                            </h3>
+
+                        {%endif%}
+                        {%if option.nut_allergy%}
+                            <h3 class="badge badge-primary ml-2" style="font-size:1em">
+                                Nut Free
+                            </h3>
+
+                        {%endif%}
+                        {%if option.egg_allergy%}
+                            <h3 class="badge badge-success ml-2" style="font-size:1em">
+                                Egg Free
+                            </h3>
+
+                        {%endif%}
+                        {%if option.dairy_allergy%}
+                            <h3 class="badge badge-info ml-2" style="font-size:1em">
+                                Dairy Free
+                            </h3>
+
+                        {%endif%}
+                        {%if option.shellfish_allergy%}
+                            <h3 class="badge badge-warning ml-2" style="font-size:1em">
+                                Shellfish Free
+                            </h3>
+
+                        {%endif%}
+                        {%if option.fish_allergy%}
+                            <h3 class="badge badge-warning ml-2" style="font-size:1em">
+                                Fish Free
+                            </h3>
+
+                        {%endif%}
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+    <br>
+{% endfor %}
+
+
+
+<!-- add dish penel-->
+<h1>What will you offer for the event</h1>
+<br>
+
+<div>
+    <!-- card for dishes -->
+    <div class="card">
+
+        <div class="card-body">
+            <div class="row ml-2">
+
+                    {% if Npreferences > 0 %}
+
+                        <h4 class="text-danger ">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Warning Allergy
+
+                        </h4>
+
+                    {% endif %}
+
+
+            </div>
+            <div class="row ml-2">
+                {%  for preference, counter in preferences.items %}
+                    {% if counter > 0 %}
+                        <h3 class="badge badge-danger ml-2" style="font-size:1em">
+                            {{ preference }} : {{ counter }}
+                        </h3>
+                    {% endif %}
+                {% endfor %}
+
+            </div>
+            <form  method="POST" action="/survey/create/{{ survey.event_id }}/{{ survey.id }}/"  enctype="multipart/form-data" id="survey_form">
+                {% csrf_token %}
+                <script type="text/javascript">
+                    var surveyId = {{ survey.id }} ;
+                    var eventId = {{ survey.event_id }};
+                </script>
+            <div class="row">
+                <div class="col-md-4 container">
+                    <img id="opiton_img" class="img-thumbnail" src="https://d2mekbzx20fc11.cloudfront.net/uploads/Morroccan_Lamb_UC_500x333-rei2.png">
+
+
+                    <!-- add image -->
+                        <div class="custom-file">
+                            {{optionForm.imageFile}}
+                        <label class="custom-file-label" for="customFile" id="file_label">Choose file</label>
+                        </div>
+                        <script type="text/javascript">
+                            $('#option_imageFile').change(function(e){
+                                var uploadFile = e.target.files[0].name;
+                                //alert(uploadFile);
+                                $('#file_label').html(uploadFile);
+                                //show image
+                                var reader = new FileReader();
+                                reader.readAsDataURL(this.files[0]);
+                                reader.onload = function (ev) {
+                                    // show the image of the picutre that is going to be upload
+                                    document.getElementById("opiton_img").src= ev.target.result;
+                                };
+                            });
+                        </script>
+                        <br>
+                        <br>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" name="useImageRecognition" value="True">
+                            <p class="form-check-label" for="exampleCheck1"><i>Use Image recognition!</i></p>
+                        </div>
+                    <!-- end add image-->
+                </div>
+
+                <div class="col-md-8">
+
+                    <div class="form-group">
+                        <h5>Name of the dish</h5>
+                       {{optionForm.name}}
+                         {% if  optionForm.name.errors %}
+                            <div class="alert alert-warning">
+                            {{ optionForm.name.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        <h5>Description</h5>
+                        {% load static %}
+                                <script type="text/javascript" src="{% static "ckeditor/ckeditor-init.js" %}"></script>
+                                <script type="text/javascript" src="{% static "ckeditor/ckeditor/ckeditor.js" %}"></script>
+                            {{optionForm.description}}
+                            {% if  optionForm.description.errors%}
+                            <div class="alert alert-warning">
+                            {{ optionForm.description.errors }}
+                            </div>
+                            {% endif %}
+                    </div>
+                    <input type="hidden" name="survey" value={{survey.id}}>
+
+
+                        <h5>Food Preference</h5>
+
+                            <div class="row">
+                                <div class="col"><span class="mr-2">{{optionForm.vegetarian}}</span><span>{{optionForm.vegetarian.label}}</span></div>
+                                <div class="col"><span class="mr-2">{{optionForm.vegan}}</span><span>{{optionForm.vegan.label}}</span></div>
+                                <div class="col"><span class="mr-2">{{optionForm.nut_allergy}}</span><span>Nut Free</span></div>
+                                <div class="col"><span class="mr-2">{{optionForm.egg_allergy}}</span><span>Egg Free</span></div>
+                            </div>
+                            <div class="row">
+                                <div class="col"><span class="mr-2">{{optionForm.dairy_allergy}}</span><span>Dairy Free</span></div>
+                                <div class="col"><span class="mr-2">{{optionForm.soy_allergy}}</span><span>Soy Free</span></div>
+                                <div class="col"><span class="mr-2">{{optionForm.shellfish_allergy}}</span><span>Shellfish Free</span></div>
+                                <div class="col"><span class="mr-2">{{optionForm.fish_allergy}}</span><span>Fish Free</span></div>
+                            </div>
+
+
+                </div>
+            </div>
+            </form>
+        </div>
+
+
+        <div class="text-right btn btn-block" >
+            <button id="add_option" class="btn btn-outline-primary" type="submit" onclick="function f() {
+                            var form = document.getElementById("survey_form");
+                            form.submit();
+                        }" name="operation" value="add_option" data-toggle="tooltip"  >
+            <i class="fas fa-plus-circle"></i>
+            </button>
+        </div>
+
+    </div>
+    <br>
+
+     <!-- end card for dishes -->
+
+</div>
+    {% load static %}
+    <script type="text/javascript"  src={% static "main/add_dish_option.js" %}></script>
+
+    {% load static %}
+    <script type="text/javascript" src = {% static "main/ajax_survey.js" %}></script>

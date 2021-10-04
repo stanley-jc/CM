@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+
+{% block head %}
+  <script type="text/javascript">
+    // This runs when the user clicks a button on the left navigation tabs.
+    // It remove the 'active' class from all tabs, and sets it to the tab the user just clicked.
+    // Doing this allows the button to be turned blue so the user can see which section they are in
+    function setActiveTab(clicked){
+      var items = document.getElementsByClassName('list-group-item');
+      Array.from(items).forEach(function(item){
+        item.classList.remove("active");
+      });
+      clicked.classList.add('active');
+    }
+  </script>
+{% endblock %}
+
+{% block content %}
+  {% if user.is_authenticated and not user.is_staff %}
+
+  <br>
+
+<div class="container-fluid">
+	<div class="row">
+		<div class="col-md-3 ">
+	     <div style="position: fixed; width: 320px;" id="sections_bar" class="list-group ">
+          <a href="#profile_section" class="list-group-item list-group-item-action active" onclick="setActiveTab(this);">Profile</a>
+          <a href="#food_preferences_section" class="list-group-item list-group-item-action" onclick="setActiveTab(this);">Food Preferences</a>
+          <a href="#events_section" class="list-group-item list-group-item-action" onclick="setActiveTab(this);">Events</a>
+      </div>
+		</div>
+  	<div class="col-md-9">
+
+    <!-- User Detail -->
+    <div id="profile_section" class="card">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-12">
+                    <h4>Profile</h4>
+                    <hr>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                  <form method="POST" action="{% url 'user_accounts:update_user' user.id %}">
+                    {% csrf_token %}
+                    {% for field in view.update_user_details_form %}
+                      <div class="form-group row">
+                        <label for="{{ field.label }}" class="col-4 col-form-label">{{ field.label }}</label>
+                        <div class="col-8">
+                          {{ field }}
+                        </div>
+                      </div>
+                    {% endfor %}
+
+                    {% for field in view.update_user_form %}
+                      <div class="form-group row">
+                        <label for="email" class="col-4 col-form-label">{{ field.label }}</label>
+                        <div class="col-8">
+                          {{ field }}
+                        </div>
+                      </div>
+                    {% endfor %}
+                    {% if messages %}
+                        {% for message in messages %}
+                          {% if "profile_update" in message.tags %}
+                            <div class="alert alert-{{ message.tags }}" role="alert">
+                              {{ message }}
+                            </div>
+                          {% endif %}
+                        {% endfor %}
+                    {% endif %}
+
+                      <div class="form-group row">
+                        <div class="offset-4 col-8 text-right">
+                          <button name="submit" type="submit" class="btn btn-primary">Update My Profile</button>
+                        </div>
+                      </div>
+                  </form>
+                </div>
+            </div>
+          </div>
+        </div>
+        <!-- End User Detail -->
+
+        <br>
+
+        <!-- Food Preferences -->
+        <div id="food_preferences_section" class="card">
+            <div class="card-body">
+            <div class="row">
+                <div class="col-md-12">
+                    <h4>Food Preferences</h4>
+                    <hr>
+                </div>
+            </div>
+              <form method="POST" action="{% url 'food_preferences:update' view.food_preferences.id %}">
+                <div class="row">
+                  {% csrf_token %}
+                  {% for field in view.food_preferences %}
+
+                  <div class="form-group col-4">
+                    <label for="email" class="col-form-label">{{ field.label }}</label>
+                    {{ field }}
+                  </div>
+
+                  {% endfor %}
+                </div>
+                <div class="text-right">
+                  <input type="submit" class="btn btn-primary" value="Update Preferences">
+                </div>
+              </form>
+              {% if messages %}
+                  {% for message in messages %}
+                    {% if "food_preferences" in message.extra_tags %}
+                      <br>
+                      <div class="alert alert-{{ message.extra_tags }}" role="alert">
+                        {{ message }}
+                      </div>
+                    {% endif %}
+                  {% endfor %}
+              {% endif %}
+
+            </div>
+        </div>
+
+          <!-- End Food Preferences -->
+          <br>
+          <!-- Events -->
+          <div id="events_section" class="card">
+              <div class="card-body">
+                  <div class="row">
+                      <div class="col-md-12">
+                          <h4>Events</h4>
+                          <hr>
+                      </div>
+                  </div>
+                  {% if view.attending %}
+                  <div class="row">
+                      <div class="col-md-12">
+                        {% for event in view.attending %}
+                        <div class="container mt-3">
+
+                          <div class="row">
+                              <div class="col-md-4">
+                               <a href="/event/details/{{ event.id }}">
+                                  {% if  event.imageFile %}
+                                      <img class="img-thumbnail" src="{{ event.imageFile.url }}">
+                                  {% else %}
+                                      <img class="img-thumbnail" src="https://d2mekbzx20fc11.cloudfront.net/uploads/Morroccan_Lamb_UC_500x333-rei2.png">
+                                  {% endif %}
+                               </a>
+                              </div>
+                              <div class="col-md-6">
+                                  <h4><a class="text-primary" href="/event/details/{{ event.id }}">{{ event.name }}</a></h4>
+                                  <p class="text-muted">{{ event.date }}</p>
+                                  <p>{{ event.location }}</p>
+                              </div>
+                              <div class="col-md-2">
+                                    <!-- <a href="/event/details/{{ event.id }}" style="height:40px; width:120px ;position: relative; top: -16px;" class="btn btn-primary">Detail</a> -->
+                                    <a href="/event/details/{{ event.id }}" class="btn btn-primary" data-toggle="tooltip" title="Detail"><i
+                                      class="fas fa-info-circle"></i></a>
+                  
+                                  <!--join and unjoin-->
+                                  <form action="/event/join/" method="POST" class="d-inline-block">
+                                      {% csrf_token %}
+                                      <input type="hidden" name="event" value="{{ event.id }}">
+                                      {% if  event not in joinedEvent%}
+                                        <button class="btn btn-primary" type="submit" name="operation" value="Join" data-toggle="tooltip" title="Join"><i
+                                          class="fas fa-sign-in-alt"></i></button>
+                                          <!-- <input class="btn btn-primary" style="height:40px; width:120px ;position: relative; top: -16px;" type="submit" name="operation" value="Join"> -->
+                                      {% else %}
+                                          <!-- <input class="btn btn-danger" style="height:40px; width:120px ;position: relative; top: -16px;" type="submit" name="operation" value="unJoin"> -->
+                                          <button class="btn btn-danger" type="submit" name="operation" value="unJoin" data-toggle="tooltip"
+                                          title="unJoin"><i class="fas fa-sign-out-alt"></i></button>
+                                      {% endif %}
+                                  </form>
+                                  <!--end join and unjoin-->
+                            </div>
+                          </div>
+                          <hr>
+                        </div>
+                {% endfor %}
+          {% else %}
+              <p class="font-italic text-secondary">Why not check out what's on?</p>
+              <hr>
+                  <h4 class="text-secondary">This Week:</h4>
+                  <div class="row">
+                    {% for event in view.events %}
+                      <div class="col-md-6 col-lg-4 mb-4 mt-4">
+                      <div class="card">
+                          <a href="{% url 'event_details' pk=event.id  %} ">
+                            {% if event.imageFile %}
+                            <div class="item-cover">
+                              <div class="item-bg-img" style="background-image:url({{event.imageFile.url}})"></div>
+                            </div>
+                            {%else%}
+                            <div class="item-cover">
+                              <div class="item-bg-img" style="background-image:url(http://itjobsnepal.com/public/clients/images/noimage.png)"></div>
+                            </div>
+                            {% endif %}
+                          </a>
+                          <!-- <img class="card-img-top" src="http://itjobsnepal.com/public/clients/images/noimage.png" alt="Card image cap"> -->
+                          <div class="card-body">
+                          <h5 class="card-title">{{ event.name }}</h5>
+                          {% if event.description %}
+                          <p class="card-text">{{ event.description|safe }}</p>
+                          {%else%}
+                          <p class="card-text" p style="color:#C0C0C0">No Description</font></p>
+                          {% endif %}
+                          <a href="/event/details/{{ event.id }}" class="btn btn-primary">Details</a>
+                          </div>
+                      </div>
+                      </div>
+                    {% endfor %}
+                  </div>
+
+          {% endif %}
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+
+  {% else %}
+    <h3>You don't have permission to view this page, please login <a href="/accounts/users/login">here</a></h3>
+  {% endif %}
+
+{% endblock %}

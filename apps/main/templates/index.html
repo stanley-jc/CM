@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section id="homepage-main">
+  <div class="bg-overlay"></div>
+  <video autoplay muted loop id="bg-video">
+    <source src="{% static 'main/church.mp4' %}" type="video/mp4">
+  </video>
+
+  <div class="content">
+
+      {% if view.main_page.description %}
+          {{  view.main_page.description|safe }}
+
+      {% else %}
+          <h1 class="text-center">Church Event Management</h1>
+        <p><font size="4"><center>A simple tool to help you connect with your church.<br>
+            See the social events they are hosting and better connect with the community!<br>
+            Come join us! We hope to see you at an event soon.</center></font></p>
+    {% endif %}
+  </div>
+</section>
+
+<div class="container mt-3">
+  <h2>What's on</h2>
+  <br>
+
+  <h3>This Week</h3>
+  <div class="row">
+    {% for event in view.events %}
+    <div class="col-md-6 col-lg-4 mb-4 mt-4">
+      <div class="card event-card shadow">
+        <a href="{% url 'event_details' pk=event.id  %} ">
+          {% if event.imageFile %}
+          <div class="item-cover">
+            <div class="item-bg-img" style="background-image:url({{event.imageFile.url}})"></div>
+          </div>
+          {%else%}
+          <div class="item-cover">
+            <div class="item-bg-img" style="background-image:url(http://itjobsnepal.com/public/clients/images/noimage.png)"></div>
+          </div>
+          {% endif %}
+        </a>
+        <div class="card-body">
+          <h5 class="card-title">{{event.name}}</h5>
+          <div class="row">
+            <div class="col-6">
+              <p class="card-text text-muted date">{{event.date}}</p>
+            </div>
+            <div class="col-6">
+              <!--join event-->
+              <form action="/event/join/" method="POST">
+                <a href="/event/details/{{ event.id }}" class="btn btn-primary" data-toggle="tooltip" title="Detail"><i
+                    class="fas fa-info-circle"></i></a>
+                <a href="/event/discussion/{{ event.id }}" class="btn btn-primary" data-toggle="tooltip" title="Discussion"><i
+                    class="far fa-comment-alt"></i></a>
+
+                {% csrf_token %}
+                <input type="hidden" name="event" value="{{ event.id }}">
+                {% if event.id not in view.attending%}
+                <button class="btn btn-primary" type="submit" name="operation" value="Join" data-toggle="tooltip" title="Join"><i
+                    class="fas fa-sign-in-alt"></i></button>
+                {% else %}
+                <button class="btn btn-danger" type="submit" name="operation" value="unJoin" data-toggle="tooltip"
+                  title="unJoin"><i class="fas fa-sign-out-alt"></i></button>
+                {% endif %}
+              </form>
+              <!--end join evnet-->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <hr>
+  {% if view.future_events %}
+  <h3>Later</h3>
+  <div class="row">
+    {% for event in view.future_events %}
+    <div class="col-md-6 col-lg-4 mb-4 mt-4">
+      <div class="card event-card shadow">
+        <a href="/event/details/{{ event.id }}">
+          {% if event.imageFile %}
+          <div class="item-cover">
+            <div class="item-bg-img" style="background-image:url({{event.imageFile.url}})"></div>
+          </div>
+          {%else%}
+          <div class="item-cover">
+            <div class="item-bg-img" style="background-image:url(http://itjobsnepal.com/public/clients/images/noimage.png)"></div>
+          </div>
+          {% endif %}
+        </a>
+        <div class="card-body">
+          <h5 class="card-title">{{event.name}}</h5>
+          <div class="row">
+            <div class="col-6">
+              <p class="card-text text-muted date">{{event.date}}</p>
+            </div>
+            <div class="col-6">
+              <!--join event-->
+              <form action="/event/join/" method="POST">
+                <a href="/event/details/{{ event.id }}" class="btn btn-primary" data-toggle="tooltip" title="Detail"><i
+                    class="fas fa-info-circle"></i></a>
+                <a href="/event/discussion/{{ event.id }}" class="btn btn-primary" data-toggle="tooltip" title="Discussion"><i
+                    class="far fa-comment-alt"></i></a>
+
+                {% csrf_token %}
+                <input type="hidden" name="event" value="{{ event.id }}">
+                {% if event.id not in view.attending%}
+                <button class="btn btn-primary" type="submit" name="operation" value="Join" data-toggle="tooltip" title="Join"><i
+                    class="fas fa-sign-in-alt"></i></button>
+                {% else %}
+                <button class="btn btn-danger" type="submit" name="operation" value="unJoin" data-toggle="tooltip"
+                  title="unJoin"><i class="fas fa-sign-out-alt"></i></button>
+                {% endif %}
+              </form>
+              <!--end join evnet-->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% endif %}
+</div>
+
+
+<footer>
+  <div class="container">
+    <div class="text-center">
+      <a href=https://www.facebook.com><i class="fab fa-facebook"></i></a>
+      <a href=https://twitter.com/?lang=en><i class="fab fa-twitter-square"></i></a>
+      <a href=https://www.instagram.com/accounts/login/?hl=en><i class="fab fa-instagram"></i></a>
+      <a href=https://www.google.com.au><i class="fab fa-google-plus-square"></i></a>
+      <p class="m-0">Made by Team © 2018</p>
+    </div>
+  </div>
+</footer>
+<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5bc98a44e9595b61"></script>
+
+
+{% endblock %}

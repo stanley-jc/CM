@@ -1,0 +1,393 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<script type="text/javascript">
+    function show(name) {
+
+        var x= document.getElementById(name);
+        if (x.style.display === "none") {
+            x.style.display = "block";
+        } else {
+            x.style.display = "none";
+        }
+    }
+</script>
+
+<div class="container mt-3">
+    {% include 'event_header.html' with event=event %}
+    <br>
+
+    <nav class="mt-5 mb-3">
+        <div class="nav nav-tabs" id="nav-tab" role="tablist">
+
+            <a class="nav-item nav-link " href="{% url 'event_details' event.id %}" role="tab"
+                aria-controls="nav-home" aria-selected="false" style="width: 50%">Description</a>
+            <a class="nav-item nav-link active"  href="{% url 'event_forums' event.id %}"
+                aria-selected="true" style="width: 50%">Discussion</a>
+
+
+        </div>
+    </nav>
+    <h3>Post Something</h3>
+{#    HERE: {{ event }}#}
+    <br>
+    <div class="card">
+        <div class="card-body container">
+            <form method="POST" action="" enctype="multipart/form-data">
+                {%csrf_token%}
+
+                <div class="form-group row">
+                    <label name="post" class="col-sm-2 col-form-label">Post text</label>
+                    <div class="col-sm-10">
+                        <!--<textarea class="form-control" name="event_description"></textarea>-->
+                        {% load static %}
+                        <script type="text/javascript" src="{% static "ckeditor/ckeditor-init.js" %}"></script>
+                        <script type="text/javascript" src="{% static "ckeditor/ckeditor/ckeditor.js" %}"></script>
+                            {{view.form.message}}
+
+
+                    </div>
+                </div>
+                <!-- upload image here-->
+                <div class="form-group row">
+                    <label name="post" class="col-sm-2 col-form-label">Post Images</label>
+                        <div class="col-sm-10">
+                            <div class="custom-file">
+                                {{form.imageFile }}
+                                <label id="image_label" class="custom-file-label" for="customFile">Choose file</label>
+                            </div>
+                        </div>
+                <!-- end upload image -->
+
+                </div>
+                <div class=" flex-row">
+                    <div id="image_container" class=" d-flex  justify-content-center " style="display:none">
+                            <div class="col-8">
+                            <img id="post_image_content" class="img-thumbnail justify-content-center" style="display:none" src="">
+                            </div>
+                    </div>
+                </div>
+
+                <script type="text/javascript">
+                    $('#post_image').change(function(e){
+                        var uploadFile = e.target.files[0].name;
+                        $("#image_label").html(uploadFile);
+                        //show image
+                        var reader = new FileReader();
+                        reader.readAsDataURL(this.files[0]);
+
+                        reader.onload = function (ev) {
+                            // show the image of the picutre that is going to be upload
+                            document.getElementById("post_image_content").src= ev.target.result;
+                            document.getElementById("image_container").style.display="block";
+                            document.getElementById("post_image_content").style.display="block";
+
+                        };
+                    });
+                </script>
+
+                <br>
+                <br>
+                <div class="text-center ">
+                    <button class="btn btn-primary">Post</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+    <br>
+    <br>
+
+
+
+
+    {% if view.posts %}
+    <div class="container mt-3">
+
+            {% for every_post in view.posts %}
+            <!-- post row -->
+            <div class="row">
+                <div class="col-12 ">
+
+                    <div class="post-item">
+                        <!-- edit button-->
+                        <div class="float-right col-2">
+                                {% if every_post.author == user %}
+                                    <form action="/event/updatepost/{{ every_post.id }}" method="POST" class="d-inline">
+                                        {% csrf_token %}
+                                        <button class="btn btn-sm btn-primary" type="submit"><i class="fa fa-edit"></i></button>
+                                    </form>
+
+                                    <form action="/event/deletepost/{{ every_post.id }}" method="POST" class="d-inline">
+                                        {% csrf_token %}
+                                        <button class="btn btn-sm btn-danger" type="submit"><i class="fa fa-trash"></i></button>
+                                </form>
+                                {% endif %}
+                        </div>
+                        <!-- end editbutton-->
+                        <!-- profile -->
+                        <div class="">
+
+                            <div class="float-left mr-3">
+                                <div class="user-img">
+                                    <i class="far fa-user"></i>
+                                </div>
+                            </div>
+                            <span>
+                                <h5 class="pt-1 mb-1">
+                                 {% if  every_post.author.is_staff%}
+                                    {% if every_post.author.user_detail.display_name %}
+                                       {{ every_post.author.user_detail.display_name }}
+                                    {% else %}
+                                     {{ every_post.author}}
+                                    {% endif %}
+                                {% else %}
+                                    {% if every_post.author.org_detail.display_name %}
+                                       {{ every_post.author.org_detail.display_name }}
+                                    {% else %}
+                                     {{ every_post.author}}
+                                    {% endif %}
+                                {% endif %}
+                                </h5>
+                            </span>
+                            <span>
+                                {{ every_post.date }}
+                            </span>
+                            <hr>
+                        </div>
+                        <!-- end profile-->
+                        <!-- start post massage-->
+                        <div class="">
+                            {{ every_post.message |safe}}
+                        </div>
+                        <!-- end post massage-->
+                        <div>
+                            {% if every_post.imageFile %}
+                                <div class="col-8">
+                                <img class="img-thumbnail" src="{{ every_post.imageFile.url }}">
+                                </div>
+                            {% else %}
+                            {% endif %}
+                        </div>
+                        <!-- like -->
+                        <div class="comment-action">
+                            {%if every_post.id not in view.has_liked %}
+                                <a tabindex="1" href="/event/discussion/postlike/{{ event.id}}/{{ every_post.id }}/" >
+                                    <i class="far fa-thumbs-up"></i> Like
+                                </a>
+                                {{ every_post.likes }}
+                            {% else%}
+                                <form class="d-inline-block" method="POST" action="{% url 'unlike_post' event.id  every_post.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-link p-0"><i class="fas fa-thumbs-up"></i> Unlike</button>
+                                    {{ every_post.likes }}
+                                </form>
+                            {% endif %}
+                        </div>
+                        <!-- endlike-->
+                        <hr>
+
+                        <div class="comment">
+                            {% if view.replies %}
+                            {% for every_reply in view.replies %}
+                                {% for every_record in view.reply_to %}
+                                {% if every_record.replier == every_reply and every_record.postID == every_post %}
+                                {# every_post.id#}
+                                {# every_reply.postID#}
+                                    <div class="comment-item">
+                                        <div class="row col-12">
+
+                                                <div>
+                                                    <div class="comment-user-img center">
+                                                        <i class="far fa-user"></i>
+                                                    </div>
+                                                </div>
+
+                                            <span class="col-11">
+                                            <div>
+                                                <div class="comment-msg ">
+                                                    {% if every_record.author.type == 0 %}
+                                                        <span><i>
+                                                            {% if  every_reply.author.is_staff%}
+                                                                {% if every_reply.author.user_detail.display_name %}
+                                                                   {{ every_reply.author.user_detail.display_name }}
+                                                                {% else %}
+                                                                 {{ every_reply.author}}
+                                                                {% endif %}
+                                                            {% else %}
+                                                                {% if every_reply.author.org_detail.display_name %}
+                                                                   {{ every_reply.author.org_detail.display_name }}
+                                                                {% else %}
+                                                                 {{ every_reply.author}}
+                                                                {% endif %}
+                                                            {% endif %}
+                                                            <b>:</b> </i></span>
+
+                                                    {% endif %}
+
+                                                    {% if every_record.author.type == 1 %}
+                                                        <span><i>
+                                                        {% if  every_reply.author.is_staff%}
+                                                                {% if every_reply.author.user_detail.display_name %}
+                                                                   {{ every_reply.author.user_detail.display_name }}
+                                                                {% else %}
+                                                                 {{ every_reply.author.author}}
+                                                                {% endif %}
+                                                            {% else %}
+                                                                {% if every_reply.author.org_detail.display_name %}
+                                                                   {{ every_reply.author.org_detail.display_name }}
+                                                                {% else %}
+                                                                 {{ every_reply.author.author}}
+                                                                {% endif %}
+                                                        {% endif %}
+                                                            <b>
+                                                            to</b>
+                                                            {% if  every_record.author.author.is_staff%}
+                                                                {% if every_record.author.author.user_detail.display_name %}
+                                                                   {{ every_record.author.author.user_detail.display_name }}
+                                                                {% else %}
+                                                                 {{ every_record.author.author}}
+                                                                {% endif %}
+                                                            {% else %}
+                                                                {% if every_record.author.author.org_detail.display_name %}
+                                                                   {{ every_record.author.author.org_detail.display_name }}
+                                                                {% else %}
+                                                                 {{ every_record.author.author}}
+                                                                {% endif %}
+                                                            {% endif %}
+
+                                                            <b>:</b> </i></span>
+
+                                                    {% endif %}
+                                                    <span>{{ every_reply.message |safe}}</span>
+                                                </div>
+
+
+                                                <div class="comment-reply">
+                                                    <div class="comment-action ">
+                                                        {%if every_reply.id not in view.has_liked %}
+                                                            <span>
+                                                            <a tabindex="1" href="/event/discussion/postlike/{{ event.id}}/{{ every_reply.id }}/" >
+                                                                <i class="far fa-thumbs-up"></i> Like
+                                                            </a>
+                                                            {{ every_reply.likes }}
+                                                            </span>
+                                                        {% else %}
+                                                            <span>
+                                                            <form method="POST" class="d-inline-block" action="{% url 'unlike_post' event.id every_reply.id %}">
+                                                                {% csrf_token %}
+                                                                <button type="submit" class="btn-link p-1"><i class="fas fa-thumbs-up"></i> Unlike</button>
+                                                                {{ every_reply.likes }}
+                                                            </form>
+                                                            </span>
+                                                        {% endif %}
+                                                        <span>
+                                                        <a class="ml-2" href="javascript:void(0);" onclick="show( {{every_reply.id}} )">Reply</a>
+                                                        </span>
+                                                        <!--reply edit tool-->
+
+                                                        {% if user == every_reply.author %}
+                                                            <span>
+                                                                <form action="/event/updatepost/{{ every_reply.id }}" method="POST" class="d-inline">
+                                                                    {% csrf_token %}
+                                                                    <button class="btn-link p-1" type="submit">Edit</button>
+                                                                </form>
+                                                            </span>
+                                                            <span>
+                                                            <form action="/event/deletepost/{{ every_reply.id }}" method="POST" class="d-inline">
+                                                                {% csrf_token %}
+                                                                <button class="btn-link text-danger p-1"  type="submit">Delete</button>
+                                                            </form>
+                                                            </span>
+                                                        {% endif %}
+
+                                                         <!-- end reply edit tool-->
+                                                    </div>
+
+                                                    <div id="{{ every_reply.id }}" style="display:none">
+
+                                                        <form method="POST" action="/event/discussion/replytocomment/{{ event.id}}/{{ every_post.id }}/{{ every_reply.id }}/" enctype="multipart/form-data">
+                                                            {%csrf_token%}
+                                                            <div class="comment-item">
+                                                                <div class="comment-post" style="margin-left: 4.5rem; width: 60%;">
+                                                                    <form method class="form-group">
+                                                                        <input class="form-control" name="message" maxlength="140" placeholder="Press Enter to post">
+                                                                    </form>
+                                                                </div>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </div>
+
+
+                                            </div>
+                                            </span>
+                                        </div>
+                                    </div>
+
+
+
+
+                                <br>
+                            {% endif %}
+                            {% endfor %}
+                        {% endfor %}
+                        {% endif %}
+                        <form method="POST" action="/event/discussion/reply/{{ event.id}}/{{ every_post.id }}/" enctype="multipart/form-data">
+                            {%csrf_token%}
+                            <div class="comment-item">
+                                <div class="">
+                                    <div class="d-inline-block">
+                                        <span>
+                                            <div class="comment-user-img">
+                                                <span>
+                                                    <i class="far fa-user"></i>
+                                                </span>
+                                            </div>
+                                        </span>
+                                        <span>
+
+                                            {% if  user.is_staff%}
+                                                {% if user.user_detail.display_name %}
+                                                   {{ user.user_detail.display_name }}
+                                                {% else %}
+                                                 {{ user.email}}
+                                                {% endif %}
+                                            {% else %}
+                                                {% if user.org_detail.display_name %}
+                                                   {{ user.org_detail.display_name }}:
+                                                {% else %}
+                                                 {{ every_record.author.author}}:
+                                                {% endif %}
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    <div class="d-inline-block" style="width: 60%">
+                                        <div class="comment-post">
+                                            <form method class="form-group">
+                                                <input class="form-control" name="message" maxlength="140" placeholder="Press Enter to post">
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <br>
+                    <br>
+                </div>
+            </div>
+        <!-- end post row-->
+        </div>
+        {% endfor %}
+
+    </div>
+
+
+
+    {% else %}
+    <p class="font-italic text-center text-muted">There is no post for this event right now</p>
+    {% endif %}
+</div>
+    {% endblock %}

@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-3">
+
+
+        <!--join event-->
+
+      <form action="/event/join/" method="POST">
+          {% csrf_token %}
+          <input type="hidden" name="event" value="{{ event.id }}">
+          {% if view.has_joined %}
+            <input class="btn btn-danger float-right" type="submit" name="operation" value="unJoin"  style="position:relative; top:8px;">
+          {% else %}
+            <input class="btn btn-primary float-right" type="submit" name="operation" value="Join"  style="position:relative; top:8px;">
+          {% endif %}
+      </form>
+
+
+    <!--end join evnet-->
+    <h1>{{ event.name}}</h1>
+    {{ errors }}
+    <p class="text-muted">{{ event.date }}</p>
+
+    <br>
+    {% if event.imageFile %}
+        <img class="img-fluid" src="{{ event.imageFile.url }}">
+    {% else %}
+        <img class="img-fluid" src="http://itjobsnepal.com/public/clients/images/noimage.png">
+    {% endif %}
+
+
+    <nav class="mt-5 mb-3">
+
+        <div class="nav nav-tabs" id="nav-tab" role="tablist">
+            {% comment %}
+            <a class="nav-item nav-link active" id="nav-home-tab" data-toggle="tab" href="#nav-home" role="tab"
+                aria-controls="nav-home" aria-selected="true" style="width: 50%">Description</a>
+            <a class="nav-item nav-link" id="nav-profile-tab" data-toggle="tab" href="#nav-profile" role="tab"
+                aria-controls="nav-profile" aria-selected="false" style="width: 50%">Discussion</a>
+                {% endcomment %}
+            <a class="nav-item nav-link active " href="{% url 'event_details' event.id %}" role="tab"
+                aria-controls="nav-home" aria-selected="false" style="width: 50%">Description</a>
+            <a class="nav-item nav-link "  href="{% url 'event_forums' event.id %}"
+                aria-selected="true" style="width: 50%">Discussion</a>
+        </div>
+
+
+    </nav>
+
+
+    <div class="tab-content" id="nav-tabContent">
+        <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
+
+            <!-- detail for the event -->
+            <h3>Description</h3>
+
+            <div class="text-secondary">
+                {{ event.description|safe}}
+            </div>
+            <hr>
+            <br>
+            <!-- all the surveys go here -->
+            {% if view.surveys %}
+                <div >
+                    <h3>
+                        <span>Relevant survey</span>
+                    {% if user.is_staff %}
+                        <a href="/survey/create/{{ event.id }}"><i class="fas fa-plus-circle" style="font-size: 26px;"></i></a>
+
+                        <span class="float-right text-muted">
+                            {%  if view.number_of_participant > 1 %}
+                                {{ view.number_of_participant}} participants
+                            {% else %}
+                                 {{ view.number_of_participant}} participant
+                            {% endif %}
+                        </span>
+
+                    {% endif %}
+                    </h3>
+                </div>
+
+            <ul class="list-group">
+                {% for survey in view.surveys %}
+                    {% if  not user.is_staff and not survey.isFinalized %}
+                    {% else %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {% if  survey.title %}
+                                {{ survey.title }}
+                            {% else %}
+                                Unnamed Event
+                            {% endif %}
+                            <div class="d-flex">
+                                {% if survey.isClose %}
+                                    <a class="btn btn-primary mr-2 disabled" href="/survey/do/{{ survey.id }}">&nbsp;&nbsp;&nbsp;Do&nbsp;&nbsp;&nbsp;</a>
+                                {% else %}
+                                    <a class="btn btn-primary mr-2 " href="/survey/do/{{ survey.id }}" >&nbsp;&nbsp;&nbsp;Do&nbsp;&nbsp;&nbsp;</a>
+                                {% endif %}
+
+                                {% if user.is_staff %}
+                                    {% if  survey.isFinalized  %}
+                                    <form method="POST" action="/survey/close_open/">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="surveyId" value="{{ survey.id }}">
+                                        {%   if not survey.isClose %}
+                                            <button type="submit" class="btn btn-info mr-2">Close</button>
+                                        {% else %}
+                                            <button type="submit" class="btn btn-info mr-2">Open</button>
+
+                                        {% endif %}
+                                    </form>
+
+                                    <form method="POST" action="/survey/delete/">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="surveyId" value="{{ survey.id }}">
+                                        <button type="submit" class="btn btn-danger mr-2">Delete</button>
+                                    </form>
+
+                                    <a href="/survey/result/{{ survey.id }}" class="btn btn-info mr-2">View result</a>
+
+                                    {% else %}
+                                         <form method="POST" action="/survey/delete/">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="surveyId" value="{{ survey.id }}">
+                                            <button type="submit" class="btn btn-danger mr-2">Delete</button>
+                                        </form>
+                                        <a href="{% url 'add_option_for_survey' event.id survey.id%}"  class="btn btn-info mr-2">
+                                            Edit Survey
+                                        </a>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+
+            {% else%}
+                {% if user.is_staff %}
+                    <div>
+                     <h3>Relevant survey
+                        <a href="/survey/create/{{ event.id }}" class="btn btn-primary"> Add survey</a>
+                        <span class="float-right text-muted">
+                            {%  if view.number_of_participant > 1 %}
+                                {{ view.number_of_participant}} participants
+                            {% else %}
+                                 {{ view.number_of_participant}} participant
+                            {% endif %}
+                        </span>
+                     </h3>
+                    </div>
+
+
+
+                {% endif %}
+
+            {% endif %}
+            <hr>
+            <!-- end surveylist-->
+            <!-- location infor -->
+
+            <h3 class="mt-3">Location</h3>
+
+            <p class="text-secondary">
+                {{ event.location }}
+            </p>
+            <!-- end location infor -->
+
+            {% comment %}
+            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d13244.79223539906!2d151.23532571568867!3d-33.910301770079265!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x6b12b18b0302c1a7%3A0x1d017d69037a07a0!2sUNSW+Sydney!5e0!3m2!1sen!2sau!4v1538709316994"
+                width="100%" height="300" frameborder="0" style="border:0" allowfullscreen></iframe>
+            <!-- end detail for the event -->
+            {% endcomment %}
+            <div id="map" style="height: 400px"></div>
+                <script>
+                    var lat = {{ event.lan }};
+                    var lng = {{ event.lng }};
+                // Initialize and add the map
+                function initMap() {
+                    if(lat && lng){
+                      // The location of location
+                      var location = {lat: lat, lng: lng};
+                      // The map, centered at location
+                      var map = new google.maps.Map(
+                          document.getElementById('map'), {zoom: 15, center: location});
+                      // The marker, positioned at location
+                      var marker = new google.maps.Marker({position: location, map: map});
+                    }else{
+                         $("#map").hide();
+                    }
+                }
+                </script>
+                <script async defer
+                src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBzZPVHB5CthWtzUzBqcnRYP3K9qLLsx-0&callback=initMap">
+                </script>
+        </div>
+
+        <div class="tab-pane fade" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab">
+            Survey form put here
+
+        </div>
+
+    </div>
+</div>
+
+<br>
+<br>
+<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5bc98a44e9595b61"></script>
+
+{% endblock %}
